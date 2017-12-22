@@ -1,0 +1,151 @@
+
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no">
+                <style>
+                    ul,li{
+                        list-style-type: none;
+                        margin:0;
+                        padding:0
+                    }
+                li{
+                    display: block;
+                    padding:10px 20px;
+                    background:#aaa;
+                    color:#fff;
+                    border-radius: 5px;
+                    margin-top:20px;
+                    text-align: center;
+                }
+                
+                    </style>
+                <title>js call native api</title>
+            
+                
+    </head>
+    <body>
+        <ul>
+            
+            <li id="J_GotoBaidu">跳转至百度</li>
+            <li id="J_NativeToJs">NativeToJs获取uid</li>
+            <li id="J_HideTitle">hideTitle</li>
+            <li id="J_ShowTitle">showTitle</li>
+            <li id="J_PopPage">popPage1</li>
+            <li id="J_OpenNewPage">openNewPage</li>
+            <li id="J_PopPage2">popPage2</li>
+            
+            
+        </ul>
+        <div id="temp"></div>
+        
+        <script>
+            
+            // 获取设备ID
+            function getDeviceId() {
+                window.webkit.messageHandlers.timefor.postMessage({code: '0001', functionName: 'getdevideId'});
+            }
+        
+        var JSBridge = {
+            eventMap: {},
+            uid: 0,
+            postNative: function(nativeMethod){
+                try{
+                    window.webkit.messageHandlers.JSBridge.postMessage({ nativeMethod:name, url: url });
+                } catch(e){
+                    console.log(e);
+                    console.error("JSBridge为生效");
+                }
+                
+            },
+            getDeviceId: function(callback){ //获取设备id
+                var self = this;
+                
+                var name = "getDeviceId";
+                var uid = this.uid;
+                
+                this.eventMap[name + uid] = function(data){
+                    callback && callback(data);
+                    delete self.eventMap[name + uid];
+                };
+                window.webkit.messageHandlers.JSBridge.postMessage({ nativeMethod:name, callback: name + uid });
+                
+                this.uid = uid + 1;
+            },
+            
+            openPage: function(url){ //打开新的webview
+                var name = "openPage";
+                
+                try{
+                    window.webkit.messageHandlers.JSBridge.postMessage({ nativeMethod:name, url: url });
+                }catch(e){
+                    console.error(e);
+                    location.href = url;
+                }
+                
+            },
+            
+            popPage: function(n){ //关闭页面
+                var name = "popPage";
+                if(!n) { n = 1 }
+                window.webkit.messageHandlers.JSBridge.postMessage({ nativeMethod:name, step: n + ""});
+            },
+            
+            hideTitle: function(){ //隐藏native title bar
+                var name = "hideTitle";
+                window.webkit.messageHandlers.JSBridge.postMessage({ nativeMethod:name});
+            },
+            
+            showTitle: function(){ //显示native title bar
+                var name = "showTitle";
+                window.webkit.messageHandlers.JSBridge.postMessage({ nativeMethod:name});
+            }
+            
+            
+            
+        };
+        
+        var J_GotoBaidu = document.getElementById("J_GotoBaidu");
+        J_GotoBaidu.onclick = function(){
+            
+            JSBridge.openPage("https://www.baidu.com");
+            
+        };
+        
+        var J_NativeToJs = document.getElementById("J_NativeToJs");
+        J_NativeToJs.onclick = function(){
+            
+            JSBridge.getDeviceId(function(data){
+                                 
+                                 document.getElementById('temp').innerHTML = data;
+                                 
+                                 });
+                                 
+        };
+        
+        var J_HideTitle = document.getElementById("J_HideTitle");
+        J_HideTitle.onclick = function(){
+            JSBridge.hideTitle();
+        };
+        var J_ShowTitle = document.getElementById("J_ShowTitle");
+        J_ShowTitle.onclick = function(){
+            JSBridge.showTitle();
+        };
+        var J_PopPage = document.getElementById("J_PopPage");
+        J_PopPage.onclick = function(){
+            JSBridge.popPage();
+        };
+        var J_OpenNewPage = document.getElementById("J_OpenNewPage");
+        J_OpenNewPage.onclick = function(){
+            JSBridge.openPage();
+        };
+        var J_PopPage2 = document.getElementById("J_PopPage2");
+        J_PopPage2.onclick = function(){
+            JSBridge.popPage(2);
+        };
+        
+        
+            </script>
+    </body>
+</html>

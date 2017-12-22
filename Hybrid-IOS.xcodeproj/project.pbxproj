@@ -15,6 +15,9 @@
 		C2DB92D71FEBA8490091B151 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = C2DB92D61FEBA8490091B151 /* main.m */; };
 		C2DB92E11FEBA8490091B151 /* Hybrid_IOSTests.m in Sources */ = {isa = PBXBuildFile; fileRef = C2DB92E01FEBA8490091B151 /* Hybrid_IOSTests.m */; };
 		C2DB92EC1FEBA84A0091B151 /* Hybrid_IOSUITests.m in Sources */ = {isa = PBXBuildFile; fileRef = C2DB92EB1FEBA84A0091B151 /* Hybrid_IOSUITests.m */; };
+		C2DB92FD1FEBAEE90091B151 /* ScanViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = C2DB92FC1FEBAEE90091B151 /* ScanViewController.m */; };
+		C2DB93001FEBB0C00091B151 /* CustomWebViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = C2DB92FF1FEBB0C00091B151 /* CustomWebViewController.m */; };
+		C2DB93021FEBE5C80091B151 /* JSBridgeDemo.html in Resources */ = {isa = PBXBuildFile; fileRef = C2DB93011FEBE5C80091B151 /* JSBridgeDemo.html */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -51,6 +54,12 @@
 		C2DB92E71FEBA8490091B151 /* Hybrid-IOSUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Hybrid-IOSUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		C2DB92EB1FEBA84A0091B151 /* Hybrid_IOSUITests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = Hybrid_IOSUITests.m; sourceTree = "<group>"; };
 		C2DB92ED1FEBA84A0091B151 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		C2DB92FA1FEBA9990091B151 /* WebKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WebKit.framework; path = System/Library/Frameworks/WebKit.framework; sourceTree = SDKROOT; };
+		C2DB92FB1FEBAEE90091B151 /* ScanViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ScanViewController.h; sourceTree = "<group>"; };
+		C2DB92FC1FEBAEE90091B151 /* ScanViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ScanViewController.m; sourceTree = "<group>"; };
+		C2DB92FE1FEBB0C00091B151 /* CustomWebViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CustomWebViewController.h; sourceTree = "<group>"; };
+		C2DB92FF1FEBB0C00091B151 /* CustomWebViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = CustomWebViewController.m; sourceTree = "<group>"; };
+		C2DB93011FEBE5C80091B151 /* JSBridgeDemo.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = JSBridgeDemo.html; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -85,6 +94,7 @@
 				C2DB92DF1FEBA8490091B151 /* Hybrid-IOSTests */,
 				C2DB92EA1FEBA8490091B151 /* Hybrid-IOSUITests */,
 				C2DB92C51FEBA8490091B151 /* Products */,
+				C2DB92F91FEBA9990091B151 /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -110,6 +120,11 @@
 				C2DB92D21FEBA8490091B151 /* LaunchScreen.storyboard */,
 				C2DB92D51FEBA8490091B151 /* Info.plist */,
 				C2DB92D61FEBA8490091B151 /* main.m */,
+				C2DB92FB1FEBAEE90091B151 /* ScanViewController.h */,
+				C2DB92FC1FEBAEE90091B151 /* ScanViewController.m */,
+				C2DB92FE1FEBB0C00091B151 /* CustomWebViewController.h */,
+				C2DB92FF1FEBB0C00091B151 /* CustomWebViewController.m */,
+				C2DB93011FEBE5C80091B151 /* JSBridgeDemo.html */,
 			);
 			path = "Hybrid-IOS";
 			sourceTree = "<group>";
@@ -130,6 +145,14 @@
 				C2DB92ED1FEBA84A0091B151 /* Info.plist */,
 			);
 			path = "Hybrid-IOSUITests";
+			sourceTree = "<group>";
+		};
+		C2DB92F91FEBA9990091B151 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				C2DB92FA1FEBA9990091B151 /* WebKit.framework */,
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -241,6 +264,7 @@
 				C2DB92D41FEBA8490091B151 /* LaunchScreen.storyboard in Resources */,
 				C2DB92D11FEBA8490091B151 /* Assets.xcassets in Resources */,
 				C2DB92CF1FEBA8490091B151 /* Main.storyboard in Resources */,
+				C2DB93021FEBE5C80091B151 /* JSBridgeDemo.html in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -267,7 +291,9 @@
 			files = (
 				C2DB92CC1FEBA8490091B151 /* ViewController.m in Sources */,
 				C2DB92D71FEBA8490091B151 /* main.m in Sources */,
+				C2DB93001FEBB0C00091B151 /* CustomWebViewController.m in Sources */,
 				C2DB92C91FEBA8490091B151 /* AppDelegate.m in Sources */,
+				C2DB92FD1FEBAEE90091B151 /* ScanViewController.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -434,9 +460,9 @@
 				DEVELOPMENT_TEAM = WZYSB9LL9F;
 				INFOPLIST_FILE = "Hybrid-IOS/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
-				PRODUCT_BUNDLE_IDENTIFIER = "com.fengdewang.Hybrid-IOS";
+				PRODUCT_BUNDLE_IDENTIFIER = com.fengdewang.IOSDemo3;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Debug;
 		};
@@ -448,9 +474,9 @@
 				DEVELOPMENT_TEAM = WZYSB9LL9F;
 				INFOPLIST_FILE = "Hybrid-IOS/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
-				PRODUCT_BUNDLE_IDENTIFIER = "com.fengdewang.Hybrid-IOS";
+				PRODUCT_BUNDLE_IDENTIFIER = com.fengdewang.IOSDemo3;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Release;
 		};
