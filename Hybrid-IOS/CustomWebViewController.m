@@ -28,7 +28,11 @@
 //顶部刷新按钮
 @property (nonatomic, strong) UIBarButtonItem *reloadBtn;
 
+//resume队列
+@property (nonatomic, strong) NSMutableArray *resumeQueue;
 
+//pause队列
+@property (nonatomic, strong) NSMutableArray *pauseQueue;
 
 @end
 
@@ -121,6 +125,18 @@
         
         [_customWebView sizeToFit];
         
+        //设置自定义代理  貌似低版本的ios（ios8）不支持
+        [[NSUserDefaults standardUserDefaults] synchronize]; //设置同步
+        [_customWebView evaluateJavaScript:@"navigator.userAgent" completionHandler:^(id result, NSError * _Nullable error) {
+
+            NSString *newUserAgent = [NSString stringWithFormat:@"%@ %@", result, @"JSBridgeDemoUserAgent"];
+            [_customWebView setCustomUserAgent:newUserAgent];
+            
+        }];
+        
+        
+        
+        
     }
     
     return _customWebView;
@@ -206,8 +222,80 @@
             [self.navigationController popViewControllerAnimated:YES];
         }
         
+    } else if([nativeMethod isEqualToString:@"resume"]) { //resume监听 进入前台
+        
+        NSString *js = [NSString stringWithFormat:@"JSBridge.eventMap.%@()", msgMap[@"callback"]];
+//        [_customWebView evaluateJavaScript:js completionHandler:nil]; //todo
+        [_resumeQueue addObject:js];
+        
+    } else if([nativeMethod isEqualToString:@"pause"]) { //pause监听 压入后台
+        
+        NSString *js = [NSString stringWithFormat:@"JSBridge.eventMap.%@()", msgMap[@"callback"]];
+        //        [_customWebView evaluateJavaScript:js completionHandler:nil]; //todo
+        [_resumeQueue addObject:js];
+        
     } else {
         return ;
+    }
+    
+}
+
+//alert实现
+- (void) webView:(WKWebView *)webView runJavaScriptAlertPanelWithMessage:(NSString *)message initiatedByFrame:(WKFrameInfo *)frame completionHandler:(void (^)(void))completionHandler{
+    
+    UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"提示" message:message preferredStyle:UIAlertControllerStyleAlert];
+    
+    [alert addAction:[UIAlertAction actionWithTitle:@"确定" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+        completionHandler();
+    }]];
+    
+    [self presentViewController:alert animated:YES completion:NULL];
+    
+}
+
+//ios自定义协议拦截
+- (void)webView:(WKWebView *)webView decidePolicyForNavigationAction:(WKNavigationAction *)navigationAction decisionHandler:(void (^)(WKNavigationActionPolicy))decisionHandler{
+    
+    NSURL *url = navigationAction.request.URL;
+    NSString *scheme = [url scheme];
+    
+    //ios接收到的scheme的值 始终为小写
+    if([scheme isEqualToString:@"jsbridge"]){
+        
+        [self handleCustomAction:url];
+        
+        decisionHandler(WKNavigationActionPolicyCancel);
+        return;
+    }
+    decisionHandler(WKNavigationActionPolicyAllow);
+    
+}
+//自定义执行的 协议拦截方法
+- (void)handleCustomAction:(NSURL *)url{
+    
+    NSString *host = [url host];
+    NSLog(@"host: %@", host);
+    NSLog(@"params: %@", [url query]);
+    
+    //解析query为字典
+    NSArray *paramsArray = [[url query] componentsSeparatedByString:@"&"];
+    NSMutableDictionary *params = [[NSMutableDictionary alloc] init];
+    for(int i = 0; i < [paramsArray count]; i++){
+        NSArray *step = [paramsArray[i] componentsSeparatedByString:@"="];
+        
+        [params setObject:step[1] forKey:step[0]];
+    }
+    
+    if([host isEqualToString:@"openPage"]){
+        
+        NSString *pageUrl = params[@"url"];
+//        pageUrl = [pageUrl stringByReplacingOccurrencesOfString:@"+" withString:@" "];
+        pageUrl = [pageUrl stringByRemovingPercentEncoding];
+        
+        CustomWebViewController *customController = [[CustomWebViewController alloc] init];
+        customController.url = pageUrl;
+        
+        [self.navigationController pushViewController:customController animated:YES];
     }
     
 }
@@ -261,6 +349,11 @@
     [self.navigationItem setLeftBarButtonItem:self.backBtn];
     [self.navigationItem setRightBarButtonItem:self.reloadBtn];
     
+    //初始化 resumeQueue对象
+    _resumeQueue = [[NSMutableArray alloc] init];
+    //初始化 pauseQueue对象
+    _pauseQueue = [[NSMutableArray alloc] init];
+    
 }
 
 - (void)viewWillAppear:(BOOL)animated{
@@ -269,6 +362,12 @@
     //进度条 title 添加监控
     [_customWebView addObserver:self forKeyPath:@"estimatedProgress" options:NSKeyValueObservingOptionNew context:NULL];
     [_customWebView addObserver:self forKeyPath:@"title" options:NSKeyValueObservingOptionNew context:NULL];
+    
+    //app进入前台事件监听
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(resumeEvents) name:UIApplicationWillEnterForegroundNotification object:nil];
+    
+    //app压入后台事件监听
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(pauseEvents) name:UIApplicationDidEnterBackgroundNotification object:nil];
 }
 
 - (void)didReceiveMemoryWarning {
@@ -278,10 +377,13 @@
 
 - (void)viewWillDisappear:(BOOL)animated{
     [super viewWillDisappear:animated];
-        
+    
+    //防止进度条重复监听
     [_customWebView removeObserver:self forKeyPath:@"estimatedProgress"];
     [_customWebView removeObserver:self forKeyPath:@"title"];
     
+    //防止resume pause重复监听
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
 }
 
 
@@ -303,6 +405,41 @@
     }
     
 }
+
+//resume方法, app进入前台
+- (void)resumeEvents{
+    NSLog(@"==============resumeEvents==============");
+    
+    //循环遍历执行注册的resume方法
+    for(int i = 0; i < [_resumeQueue count]; i++){
+        
+        [_customWebView evaluateJavaScript:[_resumeQueue objectAtIndex:i] completionHandler:nil];
+        
+    }
+    
+}
+
+//pause方法，app压入后台方法
+- (void)pauseEvents{
+    NSLog(@"==============pauseEvents==============");
+    
+    //循环遍历执行注册的pause方法
+    for(int i = 0; i < [_pauseQueue count]; i++){
+        
+        [_customWebView evaluateJavaScript:[_pauseQueue objectAtIndex:i] completionHandler:nil];
+        
+    }
+}
+
+
+
+
+
+//todo 右侧按钮...  暂不做
+
+//todo 侧滑菜单 和 jsbridge无关  暂不做
+
+
 
 
 /*

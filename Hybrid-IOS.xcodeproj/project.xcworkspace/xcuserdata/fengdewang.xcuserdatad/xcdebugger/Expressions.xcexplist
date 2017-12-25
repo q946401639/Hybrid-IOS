@@ -3,6 +3,33 @@
    version = "1.0">
    <ContextStates>
       <ContextState
+         contextName = "-[AppDelegate application:openURL:options:]:AppDelegate.m">
+         <PersistentStrings>
+            <PersistentString
+               value = "tab.selectedIndex">
+            </PersistentString>
+            <PersistentString
+               value = "tab.viewControllers">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "-[AppDelegate applicationDidEnterBackground:]:AppDelegate.m">
+         <PersistentStrings>
+            <PersistentString
+               value = "self.navigationController">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "-[CustomWebViewController handleCustomAction:]:CustomWebViewController.m">
+         <PersistentStrings>
+            <PersistentString
+               value = "url.query">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
          contextName = "-[CustomWebViewController userContentController:didReceiveScriptMessage:]:CustomWebViewController.m">
          <PersistentStrings>
             <PersistentString
