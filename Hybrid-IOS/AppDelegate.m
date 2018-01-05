@@ -21,6 +21,7 @@
     return YES;
 }
 
+//拦截 外部scheme的唤起操作 并解析参数 进行下一步操作
 - (BOOL)application:(UIApplication *)app openURL:(NSURL *)url options:(NSDictionary<UIApplicationOpenURLOptionsKey,id> *)options{
     
     NSLog(@"=============app被唤起===============");

@@ -142,6 +142,7 @@
     return _customWebView;
 }
 
+//监听网页加载进度 和 截取网页title
 - (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary<NSKeyValueChangeKey,id> *)change context:(void *)context{
     
     if([keyPath isEqualToString:@"estimatedProgress"]){
@@ -175,6 +176,7 @@
     
 }
 
+//js操作native的方法 拦截
 - (void)userContentController:(WKUserContentController *)userContentController didReceiveScriptMessage:(WKScriptMessage *)message{
     
     NSDictionary *msgMap = [NSDictionary dictionaryWithDictionary:message.body];
@@ -198,15 +200,15 @@
         NSString *js = [NSString stringWithFormat:@"JSBridge.eventMap.%@(\'%@\')", msgMap[@"callback"], uuid];
         [_customWebView evaluateJavaScript:js completionHandler:nil];
         
-    } else if([nativeMethod isEqualToString:@"hideTitle"]) {
+    } else if([nativeMethod isEqualToString:@"hideTitle"]) { //隐藏titlebar
         
         self.navigationController.navigationBarHidden = YES;
         
-    } else if([nativeMethod isEqualToString:@"showTitle"]) {
+    } else if([nativeMethod isEqualToString:@"showTitle"]) { //显示titlebar
         
         self.navigationController.navigationBarHidden = NO;
         
-    } else if([nativeMethod isEqualToString:@"popPage"]) {
+    } else if([nativeMethod isEqualToString:@"popPage"]) { //关闭webview
         int step = 1;
         if(msgMap[@"step"]){
             step = [msgMap[@"step"] intValue];
@@ -240,7 +242,7 @@
     
 }
 
-//alert实现
+//alert实现 webview会对js进行 alert等系统事件的拦截
 - (void) webView:(WKWebView *)webView runJavaScriptAlertPanelWithMessage:(NSString *)message initiatedByFrame:(WKFrameInfo *)frame completionHandler:(void (^)(void))completionHandler{
     
     UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"提示" message:message preferredStyle:UIAlertControllerStyleAlert];
