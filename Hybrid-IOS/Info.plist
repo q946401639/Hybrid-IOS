@@ -25,7 +25,7 @@
 			<string>com.fengdewang.IOSDemo3</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>JSBridgeDemo</string>
+				<string>jsbridgedemo</string>
 			</array>
 		</dict>
 	</array>
