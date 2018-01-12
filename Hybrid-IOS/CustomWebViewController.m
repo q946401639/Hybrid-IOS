@@ -190,7 +190,12 @@
 //        if(!msgMap[@"url"]) return;
         
         CustomWebViewController *customController = [[CustomWebViewController alloc] init];
-        customController.url = msgMap[@"url"];
+        
+        NSString *url = [self getValueForParams:@"url" forParams:msgMap[@"params"]];
+        
+        if(url){
+            customController.url = url;
+        }
         
         [self.navigationController pushViewController:customController animated:YES];
         
@@ -210,8 +215,10 @@
         
     } else if([nativeMethod isEqualToString:@"popPage"]) { //关闭webview
         int step = 1;
-        if(msgMap[@"step"]){
-            step = [msgMap[@"step"] intValue];
+      
+        id s = [self getValueForParams:@"step" forParams:msgMap[@"params"]];
+        if(s){
+            step = [s intValue];
         }
         
         int totals = self.navigationController.viewControllers.count;
@@ -224,13 +231,13 @@
             [self.navigationController popViewControllerAnimated:YES];
         }
         
-    } else if([nativeMethod isEqualToString:@"resume"]) { //resume监听 进入前台
+    } else if([nativeMethod isEqualToString:@"addResumeEvent"]) { //resume监听 进入前台
         
         NSString *js = [NSString stringWithFormat:@"JSBridge.eventMap.%@()", msgMap[@"callback"]];
 //        [_customWebView evaluateJavaScript:js completionHandler:nil]; //todo
         [_resumeQueue addObject:js];
         
-    } else if([nativeMethod isEqualToString:@"pause"]) { //pause监听 压入后台
+    } else if([nativeMethod isEqualToString:@"addPauseEvent"]) { //pause监听 压入后台
         
         NSString *js = [NSString stringWithFormat:@"JSBridge.eventMap.%@()", msgMap[@"callback"]];
         //        [_customWebView evaluateJavaScript:js completionHandler:nil]; //todo
@@ -433,6 +440,41 @@
     }
 }
 
+- (id) getValueForParams:(NSString *)key forParams:(NSString *)params{
+    
+    if(params == nil){
+        return nil;
+    }
+    
+    NSDictionary *queryParams = [self dictionaryWithJSONString:params];
+    
+    if(queryParams[key]){
+        return queryParams[key];
+    }
+    
+    return nil;
+}
+
+//JSON字符串转化为字典
+- (NSDictionary *) dictionaryWithJSONString:(NSString *)jsonString{
+    
+    if(jsonString == nil){
+        return nil;
+    }
+    
+    NSData *jsonData = [jsonString dataUsingEncoding:NSUTF8StringEncoding];
+    NSError *err;
+    NSDictionary *dic = [NSJSONSerialization JSONObjectWithData:jsonData options:NSJSONReadingMutableContainers error:&err];
+    
+    if(err){
+        NSLog(@"json解析失败：%@", err);
+        
+        return nil;
+    }
+    
+    return dic;
+    
+}
 
 
 

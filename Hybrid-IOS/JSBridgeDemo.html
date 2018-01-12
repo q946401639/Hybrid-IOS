@@ -47,93 +47,238 @@
         
         <script>
         
+        var ua = navigator.userAgent;
+        var IOS = 'ios';
+        var ANDROID = 'android';
+        
+        /**
+         * 监听浏览器回退事件
+         * @param actionToDo
+         */
+        var pageBackFromNextPage = function(actionToDo){
+            
+            // pageshow
+            // UA.android && window.addEventListener('focus', actionToDo, false);
+            window.addEventListener('pageshow', function (e) {
+                if (e.persisted) {
+                    actionToDo(e);
+                }
+            }, false);
+                                    
+            // visibilityChange
+            document.addEventListener('visibilitychange', function (e) {
+              if (document.visibilityState == 'visible' || !document.hidden) {
+                  actionToDo(e);
+              }
+            }, false);
+              
+          // webkitVisibilityChange
+          document.addEventListener('webkitVisibilitychange', function (e) {
+            if (document.webkitVisibilityState == 'visible' || !document.webkitHidden) {
+                actionToDo(e);
+            }
+          }, false);
+        };
+        
+        /**
+         * 监听浏览器暂停事件（压入后台）
+         * @param actionToDo
+         */
+        var pagePause = function(actionToDo){
+            
+            // pageshow
+            // UA.android && window.addEventListener('focus', actionToDo, false);
+            window.addEventListener('pagehide', function (e) {
+                if (e.persisted) {
+                    actionToDo(e);
+                }
+            }, false);
+            
+            // visibilityChange
+            document.addEventListener('visibilitychange', function (e) {
+                  if (document.visibilityState == 'hidden' || document.hidden) {
+                      actionToDo(e);
+                  }
+              }, false);
+                                      
+          // webkitVisibilityChange
+          document.addEventListener('webkitVisibilitychange', function (e) {
+                if (document.webkitVisibilityState == 'hidden' || document.webkitHidden) {
+                    actionToDo(e);
+                }
+          }, false);
+        };
+        
+        function getDeviceInfo(){ //获取设备信息
+            var device = {
+                type: null,
+                version: null
+            };
+            //设备类型
+            if (/\(i[^;]+;( U;)? CPU.+Mac OS X/.test(ua)) {
+                // iOS: Mozilla/5.0 (iPhone; CPU iPhone OS 8_4_1 like Mac OS X) AppleWebKit/600.1.4 (KHTML, like Gecko) Mobile/12H321 AliApp(LX/5.8.1) AliTrip/5.8.1
+                device.type = IOS;
+                
+                // iOS 版本号提取
+                var iosVersion = /\b[0-9]+_[0-9]+(?:_[0-9]+)?\b/.exec(ua);
+                if (iosVersion && iosVersion[0]) {
+                    device.version = iosVersion[0].replace(/_/g, '.');
+                }
+            } else if (/Android/i.test(ua)) {
+                device.type = ANDROID;
+                var match = ua.match(/Android\s+([\d\.]+)/i);
+                device.version = match && match[1];
+            } else {
+                device.type = undefined;
+            }
+                return device;
+        }
+                
         var JSBridge = {
-            eventMap: {},
+            device: getDeviceInfo(),
+            eventMap: {
+              //事件队列
+            },
             uid: 0,
-            postNative: function(nativeMethod){
+            deviceRouter: function(method, params, callback, isHold){
+                if(this.device.type == IOS){
+                    this.iosMethod(method, params, callback, isHold);
+                } else if (this.device.type == ANDROID){
+                    this.androidMethod(method, params, callback, isHold);
+                } else {
+                    console.error("请在native端使用此方法：" + method);
+                }
+            },
+            iosMethod: function(method, params, callback, isHold){ //ios通用方法
+                var self = this;
+                var uid = this.uid;
+                
+                if(callback){
+                    this.eventMap[method + uid] = function(data){
+                        callback && callback(data);
+                        if(!isHold){
+                            delete self.eventMap[method + uid];
+                        }
+                    };
+                    this.uid = uid + 1;
+                }
+                
                 try{
-                    window.webkit.messageHandlers.JSBridge.postMessage({ nativeMethod:name, url: url });
-                } catch(e){
-                    console.log(e);
-                    console.error("JSBridge为生效");
+                    var msgObj = {
+                        nativeMethod: method
+                    };
+                    if(callback){
+                        msgObj.callback = method + uid;
+                    }
+                    if(params){
+                        msgObj.params = JSON.stringify(params);
+                    }
+                
+                    window.webkit.messageHandlers.JSBridge.postMessage(msgObj);
+                }catch(e){
+                    console.error(JSON.stringify(e));
+                    console.error("需要在ios设备内使用WKWebView");
+                }
+                
+            },
+            androidMethod: function(method, params, callback, isHold){ //android通用方法
+                
+                var self = this;
+                var uid = this.uid;
+                
+                if(callback){
+                    this.eventMap[method + uid] = function(data){
+                        callback && callback(data);
+                        if(!isHold){
+                            delete self.eventMap[method + uid];
+                        }
+                    };
+                    this.uid = uid + 1;
+                }
+                
+                try{
+                
+                    if(params && callback){
+                        JSBridgeAndroid[method](JSON.stringify(params), method + uid);
+                    } else if(params) {
+                        JSBridgeAndroid[method](JSON.stringify(params));
+                    } else if(callback) {
+                        JSBridgeAndroid[method](method + uid);
+                    } else {
+                        JSBridgeAndroid[method]();
+                    }
+                
+                }catch(e){
+                    console.error(JSON.stringify(e));
+                    console.error("需要在android设备内使用JSBridge功能，无全局对象JSBridgeAndroid");
                 }
                 
             },
             getDeviceId: function(callback){ //获取设备id
-                var self = this;
-                
-                var name = "getDeviceId";
-                var uid = this.uid;
-                
-                this.eventMap[name + uid] = function(data){
-                    callback && callback(data);
-                    delete self.eventMap[name + uid];
-                };
-                window.webkit.messageHandlers.JSBridge.postMessage({ nativeMethod:name, callback: name + uid });
-                
-                this.uid = uid + 1;
-            },
             
-            openPage: function(url){ //打开新的webview
-                var name = "openPage";
+                this.deviceRouter("getDeviceId", null, callback);
                 
-                try{
-                    window.webkit.messageHandlers.JSBridge.postMessage({ nativeMethod:name, url: url });
-                }catch(e){
-                    console.error(e);
+            },
+                
+            openPage: function(url){ //打开新的webview
+                
+                this.deviceRouter("openPage", {url: url}, null);
+                if(!this.device.type){
                     location.href = url;
                 }
                 
             },
-            
+                
             popPage: function(n){ //关闭页面
-                var name = "popPage";
+                
                 if(!n) { n = 1 }
-                window.webkit.messageHandlers.JSBridge.postMessage({ nativeMethod:name, step: n + ""});
+                this.deviceRouter("popPage", {step: n}, null);
+                
+                if(!this.device.type){
+                    if(n == 1){
+                        history.back();
+                    } else {
+                        history.go(-n);
+                    }
+                }
+                // JSBridgeAndroid.popPage(n);
             },
-            
+                
             hideTitle: function(){ //隐藏native title bar
-                var name = "hideTitle";
-                window.webkit.messageHandlers.JSBridge.postMessage({ nativeMethod:name});
+                
+                this.deviceRouter("hideTitle", null, null);
+                
+                // JSBridgeAndroid.hideTitle();
             },
-            
+                
             showTitle: function(){ //显示native title bar
-                var name = "showTitle";
-                window.webkit.messageHandlers.JSBridge.postMessage({ nativeMethod:name});
+                
+                this.deviceRouter("showTitle", null, null);
+                
+                // JSBridgeAndroid.showTitle();
             },
-            
-            resume: function(callback){ //resume
-                var self = this;
                 
-                var name = "resume";
-                var uid = this.uid;
+            addResumeEvent: function(callback){ //resume
                 
-                this.eventMap[name + uid] = function(data){
-                    callback && callback(data);
-                    delete self.eventMap[name + uid];
-                };
-                window.webkit.messageHandlers.JSBridge.postMessage({ nativeMethod:name, callback: name + uid });
+                this.deviceRouter("addResumeEvent", null, callback);
                 
-                this.uid = uid + 1;
+                if(!this.device.type){
+                    pageBackFromNextPage(callback);
+                }
+                
+                // JSBridgeAndroid.addResumeEvent(name + uid);
+                
             },
-            
-            pause: function(callback){ //pause
-                var self = this;
                 
-                var name = "pause";
-                var uid = this.uid;
+            addPauseEvent: function(callback){ //pause
                 
-                this.eventMap[name + uid] = function(data){
-                    callback && callback(data);
-                    delete self.eventMap[name + uid];
-                };
-                window.webkit.messageHandlers.JSBridge.postMessage({ nativeMethod:name, callback: name + uid });
+                this.deviceRouter("addPauseEvent", null, callback);
                 
-                this.uid = uid + 1;
+                if(!this.device.type){
+                    pagePause(callback);
+                }
             }
-            
-            
-            
+                
         };
         
         var J_GotoBaidu = document.getElementById("J_GotoBaidu");
@@ -179,7 +324,7 @@
         var J_Resume = document.getElementById("J_Resume");
         J_Resume.onclick = function(){
             
-            JSBridge.resume(function(){
+            JSBridge.addResumeEvent(function(){
                                  
                                  document.getElementById('temp').innerHTML = "app 被压入前台";
                                  
@@ -190,7 +335,7 @@
         var J_Pause = document.getElementById("J_Pause");
         J_Pause.onclick = function(){
             
-            JSBridge.pause(function(){
+            JSBridge.addPauseEvent(function(){
                             
                             document.getElementById('temp2').innerHTML = "app 被压入后台";
                             
@@ -209,7 +354,11 @@
         J_BridgeScheme.onclick = function(){
             
             //ios接收到的scheme的值 始终为小写
-            location.href = "jsbridge://openPage?url=" + encodeURIComponent("https://www.baidu.com");
+            var body = document.getElementsByTagName("body")[0];
+            var iframe = document.createElement('iframe');
+            iframe.src = "jsbridge://openPage?url=" + encodeURIComponent("https://www.baidu.com");
+            body.appendChild(iframe);
+            //location.href = "jsbridge://openPage?url=" + encodeURIComponent("https://www.baidu.com");
             
         };
         

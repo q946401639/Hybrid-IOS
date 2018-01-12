@@ -44,6 +44,8 @@
         
         NSString *pageUrl = params[@"url"];
         //        pageUrl = [pageUrl stringByReplacingOccurrencesOfString:@"+" withString:@" "];
+        
+        //decode 字符串
         pageUrl = [pageUrl stringByRemovingPercentEncoding];
         
         CustomWebViewController *customController = [[CustomWebViewController alloc] init];
